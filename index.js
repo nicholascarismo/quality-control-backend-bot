@@ -2,7 +2,6 @@ import 'dotenv/config';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
-import express from 'express';
 import boltPkg from '@slack/bolt';
 import { google } from 'googleapis';
 
@@ -29,10 +28,7 @@ const {
   GOOGLE_SERVICE_ACCOUNT_EMAIL,
   GOOGLE_PRIVATE_KEY,          // multiline allowed; keep exact formatting with \n
   SHEET_DOC_ID,                // 1FVt...265Q  (do not commit real value)
-  SHEET_TAB_NAME = 'Customer', // exactly the tab that holds data
-
-  // Server
-  PORT = 3000
+  SHEET_TAB_NAME = 'Customer'  // exactly the tab that holds data
 } = process.env;
 
 /* =========================
@@ -327,19 +323,7 @@ app.command('/qc-sheet', async ({ ack, body, client, logger }) => {
   }
 });
 
-/* =========================
-   Express HTTP (health)
-========================= */
-const server = express();
-server.use(express.json({ limit: '1mb' }));
 
-server.get('/health', (_req, res) => {
-  res.status(200).send('ok');
-});
-
-server.listen(PORT, () => {
-  console.log(`[http] listening on :${PORT}`);
-});
 
 /* =========================
    Start app
