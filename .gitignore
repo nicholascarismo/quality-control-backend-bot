@@ -1,0 +1,35 @@
+cat >> .gitignore <<'EOF'
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+
+# Env & secrets
+.env
+!.env.example
+.env.*        # e.g. .env.local, .env.production
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Editors
+.vscode/
+.idea/
+EOF
+process.env
+
+# Force LF in workflows and shell scripts
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.sh   text eol=lf

@@ -1,0 +1,20 @@
+{
+  "name": "quality-control-backend-bot",
+  "version": "1.0.0",
+  "description": "Slack Socket Mode bot that reads order numbers from a Google Sheet and writes Shopify metafield values back to the sheet.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "health": "curl -fsS http://127.0.0.1:${PORT:-3000}/health || exit 1"
+  },
+  "dependencies": {
+    "@slack/bolt": "^3.19.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "googleapis": "^140.0.1"
+  }
+}

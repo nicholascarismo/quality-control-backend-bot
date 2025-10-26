@@ -1,0 +1,56 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start ssh-agent and add key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add droplet host key to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H -p 22 ${{ secrets.DROPLET_HOST }} >> ~/.ssh/known_hosts
+
+      # Compute app directory and name once (universal across repos)
+      - name: Compute APP_DIR and APP_NAME
+        id: cfg
+        run: |
+          echo "APP_NAME=${GITHUB_REPOSITORY##*/}" >> "$GITHUB_OUTPUT"
+          echo "APP_DIR=${{ secrets.BASE_DIR }}/${GITHUB_REPOSITORY##*/}" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure remote directory exists
+        run: |
+          ssh "${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}" \
+            "mkdir -p '${{ steps.cfg.outputs.APP_DIR }}' '${{ steps.cfg.outputs.APP_DIR }}/data'"
+
+      - name: Rsync repo to droplet (preserve server data/)
+        run: |
+          rsync -az --delete \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'data/' \
+            ./  "${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:${{ steps.cfg.outputs.APP_DIR }}/"
+
+      - name: Upload .env to server
+        run: |
+          # write the secret to a temp file on runner
+          printf "%s" "${{ secrets.ENV_FILE }}" > .env.deploy
+          scp .env.deploy "${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:${{ steps.cfg.outputs.APP_DIR }}/.env"
+          rm -f .env.deploy
+
+      - name: Deploy via permanent server script
+        run: |
+          ssh "${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}" \
+            "/usr/local/bin/deploy-app.sh '${{ steps.cfg.outputs.APP_DIR }}' '${{ steps.cfg.outputs.APP_NAME }}'"
