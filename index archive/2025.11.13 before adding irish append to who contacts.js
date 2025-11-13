@@ -216,37 +216,13 @@ async function processSheetAndUpdate({ client, channel, trigger_ts }) {
   for (const item of foundOrders) {
     const { rowIndex, orderName } = item;
     try {
-            const order = await findOrderByName(orderName);
+      const order = await findOrderByName(orderName);
       const metafields = await fetchOrderMetafields(order.id);
 
       const psn = packingSlipNotesFromThirdLine(metafields['custom.packing_slip_notes'] || '');
-      let who = (metafields['custom.who_contacts'] || '').trim();
+      const who = (metafields['custom.who_contacts'] || '').trim();
       const sip = (metafields['custom.ship_install_pickup'] || '').trim();
       const pif = (metafields['custom.pif_or_not'] || '').trim();
-
-      // If the order has the "MarketingSponsorship" tag,
-      // append " and Irish" to the Column E value.
-      //
-      // Example:
-      //   who = "Kenny" + tag present -> "Kenny and Irish"
-      //
-      // If "who" is empty but the tag is present, we just set it to "Irish".
-      const tagsStr = (order.tags || '').toString();
-      const hasMarketingSponsorship = tagsStr
-        .split(',')
-        .map(t => t.trim())
-        .includes('MarketingSponsorship');
-
-      if (hasMarketingSponsorship) {
-        if (who) {
-          // avoid double-adding Irish if it's already there for some reason
-          if (!/\bIrish\b/.test(who)) {
-            who = `${who} and Irish`;
-          }
-        } else {
-          who = 'Irish';
-        }
-      }
 
       updates.push({
         rowIndex,
